@@ -1,4 +1,4 @@
-CAP
+Core Annotaion Pipeline
 ===
 
-Identification of core annotation pipeline (CAP)
+Service and pipeline for the identification of core annotations (functional or taxonomic) in metagenomic data sets.

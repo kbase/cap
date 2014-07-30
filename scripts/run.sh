@@ -1,3 +1,5 @@
+#Data files on igsb:/homes/adina/for-andreas
+
 #generates simulated metagenomes combined into one file
 cat *renamed > metagenome-cumulative.fa
 

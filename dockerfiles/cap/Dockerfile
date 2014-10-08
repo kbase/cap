@@ -1,6 +1,10 @@
 FROM ubuntu:14.04
 
-RUN apt-get update && apt-get install -y python && mkdir /cap/
+RUN apt-get update && apt-get install -y \
+	samtools \
+	bedtools \
+	python && \
+	mkdir /cap/
 
 # instructions for R here
 

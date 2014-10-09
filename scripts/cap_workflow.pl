@@ -108,7 +108,7 @@ sub create_cap_workflow {
 	#python ~/khmer/scripts/normalize-by-median.py -k 20 -C 10 -N 4 -x 3e8 -s norm10k20.kh metagenome-cumulative.fa
 	#rm norm10k20.kh #do not need
 	#rm metagenome-cumulative.fa #do not need
-	# output: ????
+	# output: ???? metagenome-cumulative.fa.keep
 	
 	
 	#task 2 (velvet)

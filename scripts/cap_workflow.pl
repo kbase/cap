@@ -112,6 +112,15 @@ sub other_stuff {
 }
 
 
+sub list_resource {
+	my ($list_ref) = @_;
+	
+	my $res = {	"resource" => "list",
+				"list" => $list_ref
+		};
+	
+}
+
 sub shock_resource {
 	my ($host, $node, $filename) = @_;
 	
@@ -189,6 +198,13 @@ sub create_cap_workflow {
 	$newtask = $workflow->newTask('app:Bowtie2.bowtie2-build.default');
 	$newtask->{'cmd'}->{'app_args'} = [task_resource($t1, 0)];
 	my $t2 = $newtask->taskid();
+
+	
+	my $json = JSON->new;
+	print "AWE workflow:\n".$json->pretty->encode( $workflow->getHash() )."\n";
+	
+	
+	
 	
 	#taskgroup 3 (bowtie)
 	#can be done in parallel
@@ -241,19 +257,16 @@ sub create_cap_workflow {
 	}
 	
 	
-	#????alternate for preceeding, user dependent
-	#????for x in meta*bed; do coverageBed -a $x -b contigs.fa.bed -d > $x.bed.coverage.perbase; done
-	#requires all bedfiles completed, can be run in parallel but on the same computer, ask andreas about dict structures
-	
-	
 	#taskgroup 7 (cap)
 	#input: *mapped
 	#for x in *mapped; do python get-rpkm.py $x; done
 	#output: *rpkm
 	my @taskgroup7 = ();
+	my @taskgroup7_outputs = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
 		$taskgroup7[$i] = $workflow->newTask('app:CAP.get-rpkm.default');
 		$taskgroup7[$i]->{'cmd'}->{'app_args'} = [ task_resource($taskgroup6[$i]->taskid(), 0)];
+		$taskgroup7_outputs[$i] = task_resource($taskgroup7[$i]->taskid(), 0);
 	}
 
 	
@@ -274,14 +287,11 @@ sub create_cap_workflow {
 	#output: metag.RData
 	
 	$newtask = $workflow->newTask('app:CAP.final.default');
-	$newtask->{'cmd'}->{'app_args'} = [shock_resource($metatxt), $mgmid, 'RPKM files here, from taskgroup7'];
+	$newtask->{'cmd'}->{'app_args'} = [shock_resource($metatxt), $mgmid, list_resource(\@taskgroup7_outputs)];
 
 	
 	
 	
-	my $json = JSON->new;
-	
-	print "AWE workflow:\n".$json->pretty->encode( $workflow->getHash() )."\n";
 	
 }
 

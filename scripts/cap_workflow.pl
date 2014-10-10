@@ -97,6 +97,7 @@ sub other_stuff {
 	#rm norm10k20.kh #do not need
 	#rm metagenome-cumulative.fa #do not need
 	# output: metagenome-cumulative.fa.keep
+
 	
 	
 	#task 2 (velvet)

@@ -15,7 +15,7 @@ use AWE::Task;
 use AWE::TaskInput;
 use AWE::TaskOutput;
 
-
+use AWE::Client;
 
 
 
@@ -25,10 +25,10 @@ sub new {
 		$h{'shocktoken'} = undef;
 	}
 	my $self = {
-		aweserverurl	=> $ENV{'AWE_SERVER_URL'} ,
-		shockurl	=> $ENV{'SHOCK_SERVER_URL'},
-		clientgroup	=> $ENV{'AWE_CLIENT_GROUP'},
-		shocktoken	=> $h{'shocktoken'}
+		aweserverurl	=> $ENV{'AWE_SERVER_URL'}  || die "AWE_SERVER_URL not defined",
+		shockurl	=> $ENV{'SHOCK_SERVER_URL'} || die "SHOCK_SERVER_URL not defined",
+		clientgroup	=> $ENV{'AWE_CLIENT_GROUP'} || die "AWE_CLIENT_GROUP not defined" ,
+		shocktoken	=> $h{'shocktoken'} || die
 	};
 	bless $self, $class;
 #	$self->readConfig();
@@ -41,14 +41,20 @@ sub aweserverurl {
 	my ($self) = @_;
 	return $self->{'aweserverurl'};
 }
+
 sub shockurl {
 	my ($self) = @_;
 	return $self->{'shockurl'};
 }
+
 sub clientgroup {
-	my ($self) = @_;
+	my ($self, $value) = @_;
+	if (defined $value) {
+		$self->{'clientgroup'} = $value;
+	}
 	return $self->{'clientgroup'};
 }
+
 sub shocktoken {
 	my ($self, $value) = @_;
 	if (defined $value) {
@@ -56,6 +62,7 @@ sub shocktoken {
 	}
 	return $self->{'shocktoken'};
 }
+
 sub readConfig {
 	my ($self) = @_;
 	my $conf_file = $ENV{'KB_TOP'}.'/deployment.cfg';
@@ -112,51 +119,7 @@ sub other_stuff {
 }
 
 
-sub list_resource {
-	my ($list_ref) = @_;
-	
-	my $res = {	"resource" => "list",
-				"list" => $list_ref
-		};
-	
-}
 
-sub shock_resource {
-	my ($host, $node, $filename) = @_;
-	
-	unless (defined $node) {
-		#http://shock.metagenomics.anl.gov/node/80cce328-f8ce-4f2c-b189-803ac12f9e44
-		my ($h, $n) =$host =~ /^(.*)\/node\/(.*)(\?download)?/;
-		
-		unless (defined $n) {
-			die "could not parse shock url";
-		}
-		$host = $h;
-		$node = $n;
-		
-	}
-	
-	
-	my $res = {"resource" => "shock",
-				"host" => "$host",
-				"node" => "$node"};
-	
-	if (defined $filename) {
-		$res->{"filename"} = $filename ;
-	}
-	return $res;
-}
-
-sub task_resource {
-	my ($task, $pos) = @_;
-	
-	my $res = {"resource" => "task",
-		"task" => $task, #string
-		"position" => $pos # number;
-	};
-	
-	return $res;
-}
 
 
 
@@ -169,7 +132,8 @@ sub create_cap_workflow {
 		"project"=> "cap",
 		"user"=> "kbase-user",
 		"clientgroups"=> $self->clientgroup,
-		"noretry"=> JSON::true
+		"noretry"=> JSON::true,
+		"shockhost" => $self->shockurl() # default shock server for output files
 	);
 
 	
@@ -177,7 +141,7 @@ sub create_cap_workflow {
 	my $h = $self->shockurl;
 	
 	##############################
-	# files, assemblu and mgm id , meta.txt
+	# files, assembly and mgm id , meta.txt
 	
 	#task 1 (cap)
 	#input: contigs.fa
@@ -199,9 +163,7 @@ sub create_cap_workflow {
 	$newtask->{'cmd'}->{'app_args'} = [task_resource($t1, 0)];
 	my $t2 = $newtask->taskid();
 
-	
-	my $json = JSON->new;
-	print "AWE workflow:\n".$json->pretty->encode( $workflow->getHash() )."\n";
+	return $workflow;
 	
 	
 	
@@ -296,9 +258,71 @@ sub create_cap_workflow {
 }
 
 
-my $test = 'http://shock.metagenomics.anl.gov/node/80cce328-f8ce-4f2c-b189-803ac12f9e44';
 
-my $wf = new CAP();
-$wf->create_cap_workflow($test, $test, "some_mgm_id", [$test, $test]);
+sub submit_workflow {
+	my ($self, $workflow) = @_;
+	
+	my $debug = 1;
+	
+	############################################
+	# connect to AWE server and check the clients
+	my $awe = new AWE::Client($self->aweserverurl, $self->shocktoken, $self->shocktoken, $debug); # second token is for AWE
+	unless (defined $awe) {
+		die;
+	}
+	$awe->checkClientGroup($self->clientgroup)==0 || die "no clients in clientgroup found, ".$self->clientgroup." (AWE server: ".$self->aweserverurl.")";
+
+	
+	
+	print "submit job to AWE server...\n";
+	my $json = JSON->new;
+	my $submission_result = $awe->submit_job('json_data' => $json->encode($workflow->getHash()));
+	unless (defined $submission_result) {
+		die "error: submission_result is not defined";
+	}
+	unless (defined $submission_result->{'data'}) {
+		print STDERR Dumper($submission_result);
+		exit(1);
+	}
+	my $job_id = $submission_result->{'data'}->{'id'} || die "no job_id found";
+	print "result from AWE server:\n".$json->pretty->encode( $submission_result )."\n";
+	return $job_id;
+	
+	
+}
+
+
+#list metagenome files:
+#https://kbase.us/services/communities/download/mgm4566339.3
+#https://kbase.us/services/communities/download/mgm4566339.3?file_id=050.1
+#stage_name=upload
+#node_id
+#e.g. 16bc4e39-0ee9-4db7-8f35-05ffbfce07b0
+#https://kbase.us/services/communities/download/mgm4566339.3?stage_name=upload
+
+
+
+my $test = 'http://shock.metagenomics.anl.gov/node/16bc4e39-0ee9-4db7-8f35-05ffbfce07b0';
+
+my $cap = new CAP();
+$cap->clientgroup("docker-develop");
+
+
+
+my $assembly = $test;
+my $metatxt = "x";
+my $mgmid = "someid";
+my $input_ref = [$test, $test];
+
+my $workflow_document = $cap->create_cap_workflow($assembly, $metatxt, $mgmid, $input_ref);
+
+my $json = JSON->new;
+print "AWE workflow:\n".$json->pretty->encode( $workflow_document->getHash() )."\n";
+
+exit(0);
+
+my $job_id = $cap->submit_workflow($workflow_document);
+
+
 
 

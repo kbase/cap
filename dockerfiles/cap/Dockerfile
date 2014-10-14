@@ -5,8 +5,7 @@ RUN apt-get update && apt-get install -y \
 	bedtools \
 	python \
 	git \
-	r-base && \
-	mkdir /cap/
+	r-base
 
 RUN git clone https://github.com/kbase/cap.git
 ENV PATH $PATH:/cap/scripts

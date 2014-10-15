@@ -160,11 +160,11 @@ sub create_cap_workflow {
 	#can be done anytime after assembly but prior to bedtools
 	#python coverage-bed-reference.py contigs.fa #produces contigs.fa.bed
 	#output: contigs.fa.bed
+	my $newtask = undef;
 	
-	my $newtask = $workflow->newTask('app:CAP.coverage-bed-reference.default',
+	$newtask = $workflow->newTask('app:CAP.coverage-bed-reference.default',
 										shock_resource($assembly)
 										);
-	
 	my $t1 = $newtask->taskid();
 	
 	
@@ -178,7 +178,7 @@ sub create_cap_workflow {
 									);
 	my $t2 = $newtask->taskid();
 
-	return $workflow;
+	
 	
 	
 	
@@ -211,7 +211,7 @@ sub create_cap_workflow {
 											);
 	}
 	
-	
+	return $workflow;
 	
 	#taskgroup 5 (cap)
 	#requires bedtools, can be done in parallel
@@ -234,7 +234,8 @@ sub create_cap_workflow {
 	my @taskgroup6 = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
 		$taskgroup6[$i] = $workflow->newTask('app:Bedtools.coverageBed.default',
-												task_resource($taskgroup5[$i]->taskid(), 0)
+												task_resource($taskgroup5[$i]->taskid(), 0),
+												task_resource($t1, 0) # bedfile
 											);
 	}
 	

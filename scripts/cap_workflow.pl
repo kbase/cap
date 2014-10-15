@@ -10,14 +10,16 @@ use JSON;
 use Data::Dumper;
 
 
-use AWE::Workflow;
+use AWE::Workflow; # includes Shock::Client
 use AWE::Task;
 use AWE::TaskInput;
 use AWE::TaskOutput;
 
 use AWE::Client;
 
-use Shock::Client;
+#use Shock::Client; # not clear why I can't use that here ....
+
+1;
 
 sub new {
 	my ($class, %h) = @_;
@@ -134,14 +136,6 @@ sub create_cap_workflow {
 	my ($self, $assembly, $metatxt, $mgmid, $input_ref) = @_;
 
 	
-	#my $assembly_node = SHOCK::Client::getNodeFromURL($assembly);
-	#my $metatxt_node = SHOCK::Client::getNodeFromURL($metatxt);
-	
-	
-	#my $r = createShockResources($self->shockurl(), $self->shocktoken(), 0, $assembly);
-	
-	
-	
 	
 	my $workflow = new AWE::Workflow(
 		"pipeline"=> "cap",
@@ -150,10 +144,9 @@ sub create_cap_workflow {
 		"user"=> "kbase-user",
 		"clientgroups"=> $self->clientgroup,
 		"noretry"=> JSON::true,
-		"shockhost" => $self->shockurl() || die # default shock server for output files
+		"shockhost" => $self->shockurl() || die, # default shock server for output files
+		"shocktoken" => $self->shocktoken() || die
 	);
-
-	#$assembly = $workflow->shock_resource($assembly); # transform url into resource object
 
 	
 	
@@ -168,7 +161,7 @@ sub create_cap_workflow {
 	#python coverage-bed-reference.py contigs.fa #produces contigs.fa.bed
 	#output: contigs.fa.bed
 	
-	my $newtask = $workflow->newTask(	'app:CAP.coverage-bed-reference.default',
+	my $newtask = $workflow->newTask('app:CAP.coverage-bed-reference.default',
 										shock_resource($assembly)
 										);
 	
@@ -180,8 +173,8 @@ sub create_cap_workflow {
 	#bowtie2-build contigs.fa assembly
 	#output: assembly.*
 	
-	$newtask = $workflow->newTask(	'app:Bowtie2.bowtie2-build.default',
-									task_resource($t1, 0)
+	$newtask = $workflow->newTask('app:Bowtie2.bowtie2-build.default',
+									shock_resource($assembly) #task_resource($t1, 0)
 									);
 	my $t2 = $newtask->taskid();
 
@@ -198,7 +191,7 @@ sub create_cap_workflow {
 	
 	my @taskgroup3 = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
-		$taskgroup3[$i] = $workflow->newTask(	'app:Bowtie2.bowtie2.default',
+		$taskgroup3[$i] = $workflow->newTask('app:Bowtie2.bowtie2.default',
 												shock_resource($input_ref->[$i]),
 												task_resource($t2, 0), task_resource($t2, 1), task_resource($t2, 2), task_resource($t2, 3), task_resource($t2, 4), task_resource($t2, 5)  # this line is bowtie database
 											);
@@ -227,7 +220,9 @@ sub create_cap_workflow {
 	#output: *.bed
 	my @taskgroup5 = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
-		$taskgroup5[$i] = $workflow->newTask('app:Bedtools.bedtools.bamtobed', task_resource($taskgroup4[$i]->taskid(), 0) );
+		$taskgroup5[$i] = $workflow->newTask('app:Bedtools.bedtools.bamtobed',
+												task_resource($taskgroup4[$i]->taskid(), 0)
+											);
 	}
 	
 	
@@ -239,7 +234,8 @@ sub create_cap_workflow {
 	my @taskgroup6 = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
 		$taskgroup6[$i] = $workflow->newTask('app:Bedtools.coverageBed.default',
-												task_resource($taskgroup5[$i]->taskid(), 0) );
+												task_resource($taskgroup5[$i]->taskid(), 0)
+											);
 	}
 	
 	
@@ -250,7 +246,9 @@ sub create_cap_workflow {
 	my @taskgroup7 = ();
 	my @taskgroup7_outputs = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
-		$taskgroup7[$i] = $workflow->newTask('app:CAP.get-rpkm.default',  task_resource($taskgroup6[$i]->taskid(), 0) );
+		$taskgroup7[$i] = $workflow->newTask('app:CAP.get-rpkm.default',
+												task_resource($taskgroup6[$i]->taskid(), 0)
+												);
 		$taskgroup7_outputs[$i] = task_resource($taskgroup7[$i]->taskid(), 0);
 	}
 
@@ -271,14 +269,15 @@ sub create_cap_workflow {
 	
 	#output: metag.RData
 	
-	$newtask = $workflow->newTask(	'app:CAP.final.default' ,
-									shock_resource($metatxt),
+	$newtask = $workflow->newTask('app:CAP.final.default' ,
+									#shock_resource($metatxt),
 									string_resource('MGMID', $mgmid),
-									list_resource(\@taskgroup7_outputs) );
+									list_resource(\@taskgroup7_outputs)
+									);
 
 	
 	
-	
+	return $workflow;
 	
 }
 
@@ -331,6 +330,11 @@ sub submit_workflow {
 
 my $test = 'http://shock.metagenomics.anl.gov/node/16bc4e39-0ee9-4db7-8f35-05ffbfce07b0';
 
+my $test_contigs = 'http://shock.metagenomics.anl.gov/node/4cfbb8bb-b47d-42b3-b92c-b24b0157796c';
+
+
+
+
 my $cap = new CAP('shocktoken' => $ENV{KB_AUTH_TOKEN});
 $cap->clientgroup("docker-develop");
 $cap->aweserverurl("http://140.221.67.184:8003"); # default is ENV AWE_SERVER_URL
@@ -339,14 +343,16 @@ $cap->aweserverurl("http://140.221.67.184:8003"); # default is ENV AWE_SERVER_UR
 my $assembly = $test;
 my $metatxt = "x";
 my $mgmid = "someid";
-my $input_ref = [$test, $test];
+my $input_ref = ['http://shock.metagenomics.anl.gov/node/f41a7cbc-e1a8-4f96-a3ed-e5768c959577',
+'http://shock.metagenomics.anl.gov/node/f0ecb62c-16f7-4242-96bb-32306f1131ae',
+'http://shock.metagenomics.anl.gov/node/eba3bcf3-7ebf-4d3b-92d9-79d09fd46772'];
 
-my $workflow_document = $cap->create_cap_workflow($assembly, $metatxt, $mgmid, $input_ref);
+my $workflow_document = $cap->create_cap_workflow($test_contigs, undef, $mgmid, $input_ref);
 
 my $json = JSON->new;
 print "AWE workflow:\n".$json->pretty->encode( $workflow_document->getHash() )."\n";
 
-#exit(0);
+
 
 my $job_id = $cap->submit_workflow($workflow_document);
 

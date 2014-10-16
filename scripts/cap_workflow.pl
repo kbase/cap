@@ -150,60 +150,38 @@ sub create_cap_workflow {
 
 	
 	
-	#my $h = $self->shockurl;
+	# app defintions can be found here:
+	# https://github.com/wgerlach/Skyport/blob/master/apps.json
 	
-	##############################
-	# files, assembly and mgm id , meta.txt
 	
-	#task 1 (cap)
-	#input: contigs.fa
-	#can be done anytime after assembly but prior to bedtools
-	#python coverage-bed-reference.py contigs.fa #produces contigs.fa.bed
-	#output: contigs.fa.bed
-	my $newtask = undef;
 	
-	$newtask = $workflow->newTask('app:CAP.coverage-bed-reference.default',
+	
+	
+	my $t1 = $workflow->newTask('app:CAP.coverage-bed-reference.default',
 										shock_resource($assembly)
 										);
-	my $t1 = $newtask->taskid();
 	
 	
-	#task2 (bowtie)
-	#input: contigs.fa
-	#bowtie2-build contigs.fa assembly
-	#output: assembly.*
 	
-	$newtask = $workflow->newTask('app:Bowtie2.bowtie2-build.default',
+	
+	my $t2 = $workflow->newTask('app:Bowtie2.bowtie2-build.default',
 									shock_resource($assembly) #task_resource($t1, 0)
 									);
-	my $t2 = $newtask->taskid();
+	
 
 	
-	
-	
-	
-	
-	#taskgroup 3 (bowtie)
-	#can be done in parallel
-	#input: *renamed, assembly.*
-	#for x in *renamed; do bowtie2 -x assembly -f $x -S $x.sam; done
-	#output: *renamed.sam
-	
 	my @taskgroup3 = ();
+	my $t2id = $newtask->taskid();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
 		$taskgroup3[$i] = $workflow->newTask('app:Bowtie2.bowtie2.default',
 												shock_resource($input_ref->[$i]),
-												task_resource($t2, 0), task_resource($t2, 1), task_resource($t2, 2), task_resource($t2, 3), task_resource($t2, 4), task_resource($t2, 5)  # this line is bowtie database
+												task_resource($t2_id, 0), task_resource($t2_id, 1), task_resource($t2_id, 2), task_resource($t2_id, 3), task_resource($t2_id, 4), task_resource($t2_id, 5)  # this line is bowtie database
 											);
 	}
 	
 	
 	
-	#taskgroup 4 (cap)
-	#requires samtools, can be done in parallel
-	#input: *sam
-	#for x in *sam; do samtools view -b -t contigs.fa $x -o $x.bam; done
-	#output: *sam.bam
+	
 	my @taskgroup4 = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
 		$taskgroup4[$i] = $workflow->newTask('app:Samtools.samtools.view',
@@ -214,11 +192,6 @@ sub create_cap_workflow {
 	
 	
 	
-	#taskgroup 5 (cap)
-	#requires bedtools, can be done in parallel
-	#input: *bam
-	#for x in *bam; do bedtools bamtobed -i $x > $x.bed; done
-	#output: *.bed
 	my @taskgroup5 = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
 		$taskgroup5[$i] = $workflow->newTask('app:Bedtools.bedtools.bamtobed',
@@ -227,24 +200,17 @@ sub create_cap_workflow {
 	}
 	
 	
-	#taskgroup 6 (cap)
-	#requires preceding completed
-	#input:  meta*bed, contigs.fa.bed(3)
-	#for x in meta*bed; do coverageBed -a $x -b contigs.fa.bed > $x.reads.mapped; done
-	#output: .reads.mapped
+	
 	my @taskgroup6 = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
 		$taskgroup6[$i] = $workflow->newTask('app:Bedtools.coverageBed.default',
 												task_resource($taskgroup5[$i]->taskid(), 0),
-												task_resource($t1, 0) # bedfile
+												task_resource($t1->taskid(), 0) # bedfile
 											);
 	}
 	
 	
-	#taskgroup 7 (cap)
-	#input: *mapped
-	#for x in *mapped; do python get-rpkm.py $x; done
-	#output: *rpkm
+	
 	my @taskgroup7 = ();
 	my @taskgroup7_outputs = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
@@ -272,7 +238,7 @@ sub create_cap_workflow {
 	
 	#output: metag.RData
 	
-	$newtask = $workflow->newTask('app:CAP.final.default' ,
+	my $t8 = $workflow->newTask('app:CAP.final.default' ,
 									string_resource('MGMID', $mgmid),
 									list_resource(\@taskgroup7_outputs)
 									#shock_resource($metatxt),

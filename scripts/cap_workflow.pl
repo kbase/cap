@@ -198,6 +198,7 @@ sub create_cap_workflow {
 	}
 	
 	
+	
 	#taskgroup 4 (cap)
 	#requires samtools, can be done in parallel
 	#input: *sam
@@ -205,13 +206,13 @@ sub create_cap_workflow {
 	#output: *sam.bam
 	my @taskgroup4 = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
-		$taskgroup4[$i] = $workflow->newTask('app:Samtools.samtools.default',
+		$taskgroup4[$i] = $workflow->newTask('app:Samtools.samtools.view',
 												task_resource($taskgroup3[$i]->taskid(), 0) ,
 												shock_resource($assembly)
 											);
 	}
 	
-	return $workflow;
+	
 	
 	#taskgroup 5 (cap)
 	#requires bedtools, can be done in parallel
@@ -253,7 +254,7 @@ sub create_cap_workflow {
 		$taskgroup7_outputs[$i] = task_resource($taskgroup7[$i]->taskid(), 0);
 	}
 
-	
+	return $workflow;
 	
 	#task 8 (cap)
 	#requires all rpkm calculated
@@ -271,9 +272,9 @@ sub create_cap_workflow {
 	#output: metag.RData
 	
 	$newtask = $workflow->newTask('app:CAP.final.default' ,
-									#shock_resource($metatxt),
 									string_resource('MGMID', $mgmid),
 									list_resource(\@taskgroup7_outputs)
+									#shock_resource($metatxt),
 									);
 
 	
@@ -344,9 +345,9 @@ $cap->aweserverurl("http://140.221.67.184:8003"); # default is ENV AWE_SERVER_UR
 my $assembly = $test;
 my $metatxt = "x";
 my $mgmid = "someid";
-my $input_ref = ['http://shock.metagenomics.anl.gov/node/f41a7cbc-e1a8-4f96-a3ed-e5768c959577',
-'http://shock.metagenomics.anl.gov/node/f0ecb62c-16f7-4242-96bb-32306f1131ae',
-'http://shock.metagenomics.anl.gov/node/eba3bcf3-7ebf-4d3b-92d9-79d09fd46772'];
+my $input_ref = ['http://shock.metagenomics.anl.gov/node/f41a7cbc-e1a8-4f96-a3ed-e5768c959577']; #,
+#'http://shock.metagenomics.anl.gov/node/f0ecb62c-16f7-4242-96bb-32306f1131ae',
+#'http://shock.metagenomics.anl.gov/node/eba3bcf3-7ebf-4d3b-92d9-79d09fd46772'];
 
 my $workflow_document = $cap->create_cap_workflow($test_contigs, undef, $mgmid, $input_ref);
 

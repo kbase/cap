@@ -57,10 +57,9 @@ def get_stats_per_contig(d_coverage):
 
 if __name__=='__main__':
     bedfile = sys.argv[1]
-    readfile = sys.argv[1].split('.sam.bam')[0]
+    readfile = sys.argv[2]
     fp = open(sys.argv[1] + '.rpkm', 'w')
     readcount = get_total_number_reads(readfile)
-    if check_file(sys.argv[1]) == 'reads':
-        d_rpkm = get_rpkm(bedfile, readcount)
+	d_rpkm = get_rpkm(bedfile, readcount)
     for x in d_rpkm:
         print >>fp, '%s\t%s' % (x, str(d_rpkm[x]))

@@ -29,7 +29,7 @@ for x in *sam; do samtools view -b -t contigs.fa $x > $x.bam; done
 #requires bedtools, can be done in parallel
 for x in *bam; do bedtools bamtobed -i $x > $x.bed; done
 #requires preceding completed
-for x in meta*bed; do coverageBed -a $x -b contigs.fa.bed > $x.reads.mapped; done
+for x in *renamed*bed; do coverageBed -a $x -b contigs.fa.bed > $x.reads.mapped; done
 #alternate for preceeding, user dependent
 #for x in meta*bed; do coverageBed -a $x -b contigs.fa.bed -d > $x.bed.coverage.perbase; done
 

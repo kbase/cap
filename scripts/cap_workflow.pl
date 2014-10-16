@@ -249,7 +249,8 @@ sub create_cap_workflow {
 	my @taskgroup7_outputs = ();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
 		$taskgroup7[$i] = $workflow->newTask('app:CAP.get-rpkm.default',
-												task_resource($taskgroup6[$i]->taskid(), 0)
+												task_resource($taskgroup6[$i]->taskid(), 0),
+												shock_resource($input_ref->[$i])
 												);
 		$taskgroup7_outputs[$i] = task_resource($taskgroup7[$i]->taskid(), 0);
 	}

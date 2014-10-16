@@ -60,6 +60,6 @@ if __name__=='__main__':
     readfile = sys.argv[2]
     fp = open(sys.argv[1] + '.rpkm', 'w')
     readcount = get_total_number_reads(readfile)
-	d_rpkm = get_rpkm(bedfile, readcount)
+    d_rpkm = get_rpkm(bedfile, readcount)
     for x in d_rpkm:
         print >>fp, '%s\t%s' % (x, str(d_rpkm[x]))

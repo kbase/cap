@@ -171,7 +171,7 @@ sub create_cap_workflow {
 
 	
 	my @taskgroup3 = ();
-	my $t2id = $newtask->taskid();
+	my $t2_id = $t2->taskid();
 	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
 		$taskgroup3[$i] = $workflow->newTask('app:Bowtie2.bowtie2.default',
 												shock_resource($input_ref->[$i]),
@@ -221,7 +221,7 @@ sub create_cap_workflow {
 		$taskgroup7_outputs[$i] = task_resource($taskgroup7[$i]->taskid(), 0);
 	}
 
-	return $workflow;
+	
 	
 	#task 8 (cap)
 	#requires all rpkm calculated

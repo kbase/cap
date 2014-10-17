@@ -158,8 +158,8 @@ sub create_cap_workflow {
 	
 	
 	my $t1 = $workflow->newTask('app:CAP.coverage-bed-reference.default',
-										shock_resource($assembly)
-										);
+									shock_resource($assembly)
+									);
 	
 	
 	

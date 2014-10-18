@@ -158,8 +158,8 @@ sub create_cap_workflow {
 	
 	
 	my $t1 = $workflow->newTask('app:CAP.coverage-bed-reference.default',
-										shock_resource($assembly)
-										);
+									shock_resource($assembly)
+									);
 	
 	
 	
@@ -180,6 +180,7 @@ sub create_cap_workflow {
 	}
 	
 	
+
 	
 	
 	my @taskgroup4 = ();
@@ -297,9 +298,8 @@ sub submit_workflow {
 #$ENV{'AWE_SERVER_URL'}="http://10.1.12.14:8001";
 
 
-my $test = 'http://shock.metagenomics.anl.gov/node/16bc4e39-0ee9-4db7-8f35-05ffbfce07b0';
+#my $test = 'http://shock.metagenomics.anl.gov/node/16bc4e39-0ee9-4db7-8f35-05ffbfce07b0';
 
-my $test_contigs = 'http://shock.metagenomics.anl.gov/node/4cfbb8bb-b47d-42b3-b92c-b24b0157796c';
 
 
 
@@ -309,9 +309,10 @@ $cap->clientgroup("docker-develop");
 $cap->aweserverurl("http://140.221.67.184:8003"); # default is ENV AWE_SERVER_URL
 
 
-my $assembly = $test;
-my $metatxt = "x";
-my $mgmid = "someid";
+my $test_contigs = 'http://shock.metagenomics.anl.gov/node/4cfbb8bb-b47d-42b3-b92c-b24b0157796c';
+
+
+my $mgmid = "mgm4566339.3";
 my $input_ref = ['http://shock.metagenomics.anl.gov/node/f41a7cbc-e1a8-4f96-a3ed-e5768c959577']; #,
 #'http://shock.metagenomics.anl.gov/node/f0ecb62c-16f7-4242-96bb-32306f1131ae',
 #'http://shock.metagenomics.anl.gov/node/eba3bcf3-7ebf-4d3b-92d9-79d09fd46772'];
@@ -321,7 +322,7 @@ my $workflow_document = $cap->create_cap_workflow($test_contigs, undef, $mgmid, 
 my $json = JSON->new;
 print "AWE workflow:\n".$json->pretty->encode( $workflow_document->getHash() )."\n";
 
-
+#exit(0);
 
 my $job_id = $cap->submit_workflow($workflow_document);
 

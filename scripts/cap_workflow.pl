@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 package CAP;
+
 use strict;
 use warnings;
 #use Config::Simple; # for kbase config
@@ -11,9 +12,6 @@ use Data::Dumper;
 
 
 use AWE::Workflow; # includes Shock::Client
-use AWE::Task;
-use AWE::TaskInput;
-use AWE::TaskOutput;
 
 use AWE::Client;
 
@@ -133,7 +131,7 @@ sub other_stuff {
 
 
 sub create_cap_workflow {
-	my ($self, $assembly, $metatxt, $mgmid, $input_ref) = @_;
+	my ($self, $assembly, $mgmid, $list_of_read_files) = @_;
 
 	
 	
@@ -154,7 +152,9 @@ sub create_cap_workflow {
 	# https://github.com/wgerlach/Skyport/blob/master/apps.json
 	
 	
+	my $t0 = $workflow->newTask('app:CAP.test.default');
 	
+	return $workflow;
 	
 	
 	my $t1 = $workflow->newTask('app:CAP.coverage-bed-reference.default',
@@ -172,9 +172,9 @@ sub create_cap_workflow {
 	
 	my @taskgroup3 = ();
 	my $t2_id = $t2->taskid();
-	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
+	for (my $i = 0 ; $i < @{$list_of_read_files} ; $i++) {
 		$taskgroup3[$i] = $workflow->newTask('app:Bowtie2.bowtie2.default',
-												shock_resource($input_ref->[$i]),
+												shock_resource($list_of_read_files->[$i]),
 												task_resource($t2_id, 0), task_resource($t2_id, 1), task_resource($t2_id, 2), task_resource($t2_id, 3), task_resource($t2_id, 4), task_resource($t2_id, 5)  # this line is bowtie database
 											);
 	}
@@ -184,7 +184,7 @@ sub create_cap_workflow {
 	
 	
 	my @taskgroup4 = ();
-	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
+	for (my $i = 0 ; $i < @{$list_of_read_files} ; $i++) {
 		$taskgroup4[$i] = $workflow->newTask('app:Samtools.samtools.view',
 												task_resource($taskgroup3[$i]->taskid(), 0) ,
 												shock_resource($assembly)
@@ -194,7 +194,7 @@ sub create_cap_workflow {
 	
 	
 	my @taskgroup5 = ();
-	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
+	for (my $i = 0 ; $i < @{$list_of_read_files} ; $i++) {
 		$taskgroup5[$i] = $workflow->newTask('app:Bedtools.bedtools.bamtobed',
 												task_resource($taskgroup4[$i]->taskid(), 0)
 											);
@@ -203,7 +203,7 @@ sub create_cap_workflow {
 	
 	
 	my @taskgroup6 = ();
-	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
+	for (my $i = 0 ; $i < @{$list_of_read_files} ; $i++) {
 		$taskgroup6[$i] = $workflow->newTask('app:Bedtools.coverageBed.default',
 												task_resource($taskgroup5[$i]->taskid(), 0),
 												task_resource($t1->taskid(), 0) # bedfile
@@ -214,10 +214,10 @@ sub create_cap_workflow {
 	
 	my @taskgroup7 = ();
 	my @taskgroup7_outputs = ();
-	for (my $i = 0 ; $i < @{$input_ref} ; $i++) {
+	for (my $i = 0 ; $i < @{$list_of_read_files} ; $i++) {
 		$taskgroup7[$i] = $workflow->newTask('app:CAP.get-rpkm.default',
 												task_resource($taskgroup6[$i]->taskid(), 0),
-												shock_resource($input_ref->[$i])
+												shock_resource($list_of_read_files->[$i])
 												);
 		$taskgroup7_outputs[$i] = task_resource($taskgroup7[$i]->taskid(), 0);
 	}
@@ -256,7 +256,7 @@ sub create_cap_workflow {
 sub submit_workflow {
 	my ($self, $workflow) = @_;
 	
-	my $debug = 1;
+	my $debug = 0;
 	
 	############################################
 	# connect to AWE server and check the clients
@@ -313,16 +313,16 @@ my $test_contigs = 'http://shock.metagenomics.anl.gov/node/4cfbb8bb-b47d-42b3-b9
 
 
 my $mgmid = "mgm4566339.3";
-my $input_ref = ['http://shock.metagenomics.anl.gov/node/f41a7cbc-e1a8-4f96-a3ed-e5768c959577']; #,
+my $list_of_read_files = ['http://shock.metagenomics.anl.gov/node/f41a7cbc-e1a8-4f96-a3ed-e5768c959577']; #,
 #'http://shock.metagenomics.anl.gov/node/f0ecb62c-16f7-4242-96bb-32306f1131ae',
 #'http://shock.metagenomics.anl.gov/node/eba3bcf3-7ebf-4d3b-92d9-79d09fd46772'];
 
-my $workflow_document = $cap->create_cap_workflow($test_contigs, undef, $mgmid, $input_ref);
+my $workflow_document = $cap->create_cap_workflow($test_contigs, $mgmid, $list_of_read_files);
 
 my $json = JSON->new;
 print "AWE workflow:\n".$json->pretty->encode( $workflow_document->getHash() )."\n";
 
-#exit(0);
+
 
 my $job_id = $cap->submit_workflow($workflow_document);
 

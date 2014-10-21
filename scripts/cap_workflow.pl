@@ -152,9 +152,9 @@ sub create_cap_workflow {
 	# https://github.com/wgerlach/Skyport/blob/master/apps.json
 	
 	
-	my $t0 = $workflow->newTask('app:CAP.test.default');
-	
-	return $workflow;
+	#testing:
+	#my $t0 = $workflow->newTask('app:CAP.test.default');
+	#return $workflow;
 	
 	
 	my $t1 = $workflow->newTask('app:CAP.coverage-bed-reference.default',
@@ -165,7 +165,7 @@ sub create_cap_workflow {
 	
 	
 	my $t2 = $workflow->newTask('app:Bowtie2.bowtie2-build.default',
-									shock_resource($assembly) #task_resource($t1, 0)
+									shock_resource($assembly)
 									);
 	
 

@@ -1,0 +1,13 @@
+library(phyloseq)
+#metadata = read.delim(file="./meta.txt", row.names = 1, sep="\t", header=TRUE)
+abund <- read.delim(sep='\t', file="./merged.out",header=TRUE, strip.white=TRUE, row.names=1)
+abund_core <- abund[apply(abund, MARGIN=1, function(x) all(x > 0)),]
+abund_matrix <- as.matrix(abund_core)
+abundance <- otu_table(abund_matrix, taxa_are_rows=TRUE)
+#metadata <- sample_data(metadata)
+ann_data <- read.delim(sep='\t', file="./annotations.txt.besthits",header=TRUE, strip.white=TRUE, row.names=1)
+ann_data_matrix <- as.matrix(ann_data)
+annotation <- tax_table(ann_data_matrix)
+#metag <- phyloseq(metadata, abundance, annotation)
+metag <- phyloseq(abundance, annotation)
+save(metag, file = "metag.RData")

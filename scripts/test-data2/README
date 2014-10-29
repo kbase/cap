@@ -1,0 +1,16 @@
+Data files are too big to put on git but they are in igsb
+
+Files of relevance:
+/homes/adina/for-wolfgang/cap/test-data2
+-rw-r--r-- 1 adina collab    3663392 Oct 28 14:00 annotations.txt
+-rw-r--r-- 1 adina collab    2779136 Oct 28 13:59 annotations.txt.besthits
+-rw-r--r-- 1 adina collab   45749382 Oct 28 14:00 contigs.fa
+-rw-r--r-- 1 adina collab   29269268 Oct 28 13:59 merged.out
+-rw-r--r-- 1 adina collab 1040719970 Oct 28 14:02 metagenome1.fa.renamed
+-rw-r--r-- 1 adina collab   18742544 Oct 28 13:59 metagenome1.fa.renamed.sam.bam.bed.reads.mapped.rpkm
+-rw-r--r-- 1 adina collab  720861468 Oct 28 14:00 metagenome2.fa.renamed
+-rw-r--r-- 1 adina collab   18707963 Oct 28 14:02 metagenome2.fa.renamed.sam.bam.bed.reads.mapped.rpkm
+-rw-r--r-- 1 adina collab 1726023926 Oct 28 14:04 metagenome3.fa.renamed
+-rw-r--r-- 1 adina collab   18959946 Oct 28 13:59 metagenome3.fa.renamed.sam.bam.bed.reads.mapped.rpkm
+-rw-r--r-- 1 adina collab      33987 Oct 28 13:59 metag.RData
+

@@ -157,14 +157,14 @@ sub create_cap_workflow {
 	#return $workflow;
 	
 	
-	my $t1 = $workflow->newTask('app:CAP.coverage-bed-reference.default',
+	my $t1 = $workflow->newTask('CAP.coverage-bed-reference.default',
 									shock_resource($assembly)
 									);
 	
 	
 	
 	
-	my $t2 = $workflow->newTask('app:Bowtie2.bowtie2-build.default',
+	my $t2 = $workflow->newTask('Bowtie2.bowtie2-build.default',
 									shock_resource($assembly)
 									);
 	
@@ -173,7 +173,7 @@ sub create_cap_workflow {
 	my @taskgroup3 = ();
 	my $t2_id = $t2->taskid();
 	for (my $i = 0 ; $i < @{$list_of_read_files} ; $i++) {
-		$taskgroup3[$i] = $workflow->newTask('app:Bowtie2.bowtie2.default',
+		$taskgroup3[$i] = $workflow->newTask('Bowtie2.bowtie2.default',
 												shock_resource($list_of_read_files->[$i]),
 												task_resource($t2_id, 0), task_resource($t2_id, 1), task_resource($t2_id, 2), task_resource($t2_id, 3), task_resource($t2_id, 4), task_resource($t2_id, 5)  # this line is bowtie database
 											);
@@ -185,7 +185,7 @@ sub create_cap_workflow {
 	
 	my @taskgroup4 = ();
 	for (my $i = 0 ; $i < @{$list_of_read_files} ; $i++) {
-		$taskgroup4[$i] = $workflow->newTask('app:Samtools.samtools.view',
+		$taskgroup4[$i] = $workflow->newTask('Samtools.samtools.view',
 												task_resource($taskgroup3[$i]->taskid(), 0) ,
 												shock_resource($assembly)
 											);
@@ -195,7 +195,7 @@ sub create_cap_workflow {
 	
 	my @taskgroup5 = ();
 	for (my $i = 0 ; $i < @{$list_of_read_files} ; $i++) {
-		$taskgroup5[$i] = $workflow->newTask('app:Bedtools.bedtools.bamtobed',
+		$taskgroup5[$i] = $workflow->newTask('Bedtools.bedtools.bamtobed',
 												task_resource($taskgroup4[$i]->taskid(), 0)
 											);
 	}
@@ -204,7 +204,7 @@ sub create_cap_workflow {
 	
 	my @taskgroup6 = ();
 	for (my $i = 0 ; $i < @{$list_of_read_files} ; $i++) {
-		$taskgroup6[$i] = $workflow->newTask('app:Bedtools.coverageBed.default',
+		$taskgroup6[$i] = $workflow->newTask('Bedtools.coverageBed.default',
 												task_resource($taskgroup5[$i]->taskid(), 0),
 												task_resource($t1->taskid(), 0) # bedfile
 											);
@@ -215,7 +215,7 @@ sub create_cap_workflow {
 	my @taskgroup7 = ();
 	my @taskgroup7_outputs = ();
 	for (my $i = 0 ; $i < @{$list_of_read_files} ; $i++) {
-		$taskgroup7[$i] = $workflow->newTask('app:CAP.get-rpkm.default',
+		$taskgroup7[$i] = $workflow->newTask('CAP.get-rpkm.default',
 												task_resource($taskgroup6[$i]->taskid(), 0),
 												shock_resource($list_of_read_files->[$i])
 												);
@@ -239,7 +239,7 @@ sub create_cap_workflow {
 	
 	#output: metag.RData
 	
-	my $t8 = $workflow->newTask('app:CAP.final.default' ,
+	my $t8 = $workflow->newTask('CAP.final.default' ,
 									string_resource('MGMID', $mgmid),
 									list_resource(\@taskgroup7_outputs)
 									#shock_resource($metatxt),
@@ -305,17 +305,22 @@ sub submit_workflow {
 
 
 my $cap = new CAP('shocktoken' => $ENV{KB_AUTH_TOKEN});
-$cap->clientgroup("docker-develop");
+$cap->clientgroup("dockertest");
 $cap->aweserverurl("http://140.221.67.184:8003"); # default is ENV AWE_SERVER_URL
 
 
-my $test_contigs = 'http://shock.metagenomics.anl.gov/node/4cfbb8bb-b47d-42b3-b92c-b24b0157796c';
-
-
-my $mgmid = "mgm4566339.3";
-my $list_of_read_files = ['http://shock.metagenomics.anl.gov/node/f41a7cbc-e1a8-4f96-a3ed-e5768c959577']; #,
+#my $test_contigs = 'http://shock.metagenomics.anl.gov/node/4cfbb8bb-b47d-42b3-b92c-b24b0157796c';
+#my $mgmid = "mgm4566339.3";
+#my $list_of_read_files = ['http://shock.metagenomics.anl.gov/node/f41a7cbc-e1a8-4f96-a3ed-e5768c959577',
 #'http://shock.metagenomics.anl.gov/node/f0ecb62c-16f7-4242-96bb-32306f1131ae',
 #'http://shock.metagenomics.anl.gov/node/eba3bcf3-7ebf-4d3b-92d9-79d09fd46772'];
+
+
+my $test_contigs = 'http://shock.metagenomics.anl.gov/node/660e04ea-8200-4f97-bb35-0b75b458aaea';
+my $mgmid = "mgm4566339.3";
+my $list_of_read_files = ['http://shock.metagenomics.anl.gov/node/6187d503-94d8-4460-8d81-53be7c5ad7d2', 'http://shock.metagenomics.anl.gov/node/b7bf5ca7-975e-4ef3-9040-2ac9a599d70f', 'http://shock.metagenomics.anl.gov/node/54161cd8-b8ab-4182-b47d-464af0970e51'];
+
+
 
 my $workflow_document = $cap->create_cap_workflow($test_contigs, $mgmid, $list_of_read_files);
 

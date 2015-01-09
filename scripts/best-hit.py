@@ -9,7 +9,7 @@ for line in open(sys.argv[1]):
         print line,
     else:
         data = line.rstrip().split('\t')
-        query = data[0].split('|')[1]
+        query = '_'.join(data[0].split('|')[1].split('_')[0:6])
         data[0] = query
         hit = data[1]
         if d.has_key(query):

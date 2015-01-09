@@ -38,7 +38,7 @@ for x in *mapped; do python get-rpkm.py $x; done
 #requires all rpkm calculated
 python merge.py *rpkm
 
-#requires curl
+#requires curl - need to add authorization
 curl "http://api.metagenomics.anl.gov/1/annotation/similarity/mgm4566339.3?type=ontology&source=Subsystems" > annotations.txt
 
 python best-hit.py annotations.txt > annotations.txt.besthits

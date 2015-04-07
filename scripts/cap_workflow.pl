@@ -21,17 +21,25 @@ use AWE::Client;
 
 sub new {
 	my ($class, %h) = @_;
-	if (defined($h{'shocktoken'}) && $h{'shocktoken'} eq '') {
-		$h{'shocktoken'} = undef;
-	}
+	
 	my $self = {
-		aweserverurl	=> ($ENV{'AWE_SERVER_URL'}  || die "AWE_SERVER_URL not defined"),
-		shockurl	=> ($ENV{'SHOCK_SERVER_URL'} || die "SHOCK_SERVER_URL not defined"),
-		clientgroup	=> ($ENV{'AWE_CLIENT_GROUP'} || die "AWE_CLIENT_GROUP not defined"),
-		shocktoken	=> ($h{'shocktoken'} || die "shocktoken not defined in CAP constructor")
+		aweserverurl	=> $ENV{'AWE_SERVER_URL'},
+		shockurl		=> $ENV{'SHOCK_SERVER_URL'},
+		clientgroup		=> $ENV{'AWE_CLIENT_GROUP'},
+		shocktoken		=> $ENV{'KB_AUTH_TOKEN'}
 	};
 	
-
+	foreach my $key ('aweserverurl', 'shockurl', 'clientgroup', 'shocktoken') {
+		if (defined($h{$key}) && $h{$key} ne '') {
+			$self->{$key} = $h{$key};
+		}
+		
+		unless (defined $self->{$key} ) {
+			die "variable $key not defined";
+		}
+		
+	}
+	
 	bless $self, $class;
 #	$self->readConfig();
 	
@@ -304,9 +312,7 @@ sub submit_workflow {
 
 
 
-my $cap = new CAP('shocktoken' => $ENV{KB_AUTH_TOKEN});
-$cap->clientgroup("dockertest");
-$cap->aweserverurl("http://140.221.67.184:8003"); # default is ENV AWE_SERVER_URL
+my $cap = new CAP('clientgroup' => "docker", "aweserverurl" => "http://140.221.67.149:8001/");
 
 
 #my $test_contigs = 'http://shock.metagenomics.anl.gov/node/4cfbb8bb-b47d-42b3-b92c-b24b0157796c';
@@ -314,6 +320,7 @@ $cap->aweserverurl("http://140.221.67.184:8003"); # default is ENV AWE_SERVER_UR
 #my $list_of_read_files = ['http://shock.metagenomics.anl.gov/node/f41a7cbc-e1a8-4f96-a3ed-e5768c959577',
 #'http://shock.metagenomics.anl.gov/node/f0ecb62c-16f7-4242-96bb-32306f1131ae',
 #'http://shock.metagenomics.anl.gov/node/eba3bcf3-7ebf-4d3b-92d9-79d09fd46772'];
+
 
 
 my $test_contigs = 'http://shock.metagenomics.anl.gov/node/660e04ea-8200-4f97-bb35-0b75b458aaea';
